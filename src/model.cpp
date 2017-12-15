@@ -12,8 +12,10 @@
 
 void Model::run(string doc_pt, string res_dir) {
   load_docs(doc_pt);
+  cout << "load doc end" << endl;
 
   model_init();
+  cout << "model init end" << endl;
 
   cout << "Begin iteration" << endl;
   string out_dir = res_dir + "k" + str_util::itos(K) + ".";

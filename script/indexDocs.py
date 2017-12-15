@@ -15,7 +15,9 @@ def indexFile(pt, res_pt):
                 w2id[w] = len(w2id)
                 
         wids = [w2id[w] for w in ws]  
-        print(' '.join(map(str, wids)), file=wf)
+        #print(' '.join(map(str, wids)))
+        wf.write(' '.join(map(str, wids)) + '\n')
+        #print(' '.join(map(str, wids)), file=wf)
          
     print('write file: '+str(res_pt))
 
@@ -24,7 +26,9 @@ def write_w2id(res_pt):
     print('write:'+str(res_pt))
     wf = open(res_pt, 'w')
     for w, wid in sorted(w2id.items(), key=lambda d:d[1]):
-        print('%d\t%s' % (wid, w), file=wf)
+        #print('%d\t%s' % (wid, w))
+        wf.write(str(wid) + '\t' + w + '\n')
+        #print('%d\t%s' % (wid, w), file=wf)
         
 if __name__ == '__main__':
     if len(sys.argv) < 4:

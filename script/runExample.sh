@@ -3,18 +3,19 @@
 
 K=20   # number of topics
 
-alpha=`echo "scale=3;50/$K"|bc`
+#alpha=`echo "scale=3;50/$K"|bc`
+alpha=2.5
 beta=0.005
 niter=5
 save_step=501
 
-input_dir=../sample-data/
+input_dir=../data/
 output_dir=../output/
 model_dir=${output_dir}model/
 mkdir -p $output_dir/model 
 
 # the input docs for training
-doc_pt=${input_dir}doc_info.txt
+doc_pt=${input_dir}doc
 
 echo "=============== Index Docs ============="
 # docs after indexing

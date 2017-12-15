@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
     // load training data from file
 	clock_t start = clock();
 	Model model(K, W, alpha, beta, n_iter, save_step);
+    cout << "model object init done" << endl;
 	model.run(docs_pt, dir);
 	clock_t end = clock();
 	printf("cost %fs\n", double(end - start)/CLOCKS_PER_SEC);	
