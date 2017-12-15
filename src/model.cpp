@@ -10,12 +10,10 @@
 #include "str_util.h"
 #include "model.h"
 
-void Model::run(string doc_pt, string res_dir) {
-  load_docs(doc_pt);
-  cout << "load doc end" << endl;
-
+void Model::run(string doc_pt, string res_dir, string doc_user) {
+  load_docs(doc_pt, doc_user);
+cout<<"after load doc"<<endl;
   model_init();
-  cout << "model init end" << endl;
 
   cout << "Begin iteration" << endl;
   string out_dir = res_dir + "k" + str_util::itos(K) + ".";
@@ -36,6 +34,7 @@ void Model::run(string doc_pt, string res_dir) {
 void Model::model_init() {
   srand(time(NULL));
   // random initialize
+  nu_z.resize(UN+1, K);
   for (vector<Biterm>::iterator b = bs.begin(); b != bs.end(); ++b) {
 	int k = Sampler::uni_sample(K);
 	assign_biterm_topic(*b, k);
@@ -44,7 +43,7 @@ void Model::model_init() {
 
 // input, each line is a doc
 // format: wid  wid  wid ...
-void Model::load_docs(string dfile) {
+void Model::load_docs(string dfile, string doc_user) {
   cout << "load docs: " << dfile << endl;
   ifstream rf( dfile.c_str() );
   if (!rf) {
@@ -52,11 +51,24 @@ void Model::load_docs(string dfile) {
 	exit(-1);
   }
 
+  ifstream userf(doc_user.c_str());
+  if (!userf) {
+          cout << "file not find:" << doc_user << endl;
+          exit(-1);
+  }
+
   string line;
+  string line_user;
+  int user;
   while(getline(rf, line)) {
+        getline(userf, line_user);
+        istringstream useriss(line_user);
+        useriss >> user;
+        if (user>UN)
+            UN = user;
+
 	Doc doc(line);
-	doc.gen_biterms(bs);
-	// statistic the exmperial word distribution
+	doc.gen_biterms(bs, user);
 	for (int i = 0; i < doc.size(); ++i) {
 	  int w = doc.get_w(i);
 	  pw_b[w] += 1;
@@ -85,10 +97,12 @@ void Model::reset_biterm_topic(Biterm& bi) {
   // not is the background topic
   int w1 = bi.get_wi();
   int w2 = bi.get_wj();
-  
+  int u = bi.get_user();
+ 
   nb_z[k] -= 1;	// update number of biterms in topic K
   nwz[k][w1] -= 1;	// update w1's occurrence times in topic K
   nwz[k][w2] -= 1;
+  nu_z[u][k] -= 1;
   assert(nb_z[k] > -10e-7 && nwz[k][w1] > -10e-7 && nwz[k][w2] > -10e-7);
   bi.reset_z();
 }
@@ -98,8 +112,9 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz) {
   pz.resize(K);
   int w1 = bi.get_wi();
   int w2 = bi.get_wj();
+  int user = bi.get_user();
   
-  double pw1k, pw2k, pk;
+  double pw1k, pw2k, pk, puk;
   for (int k = 0; k < K; ++k) {
 	// avoid numerical problem by mutipling W
 	if (has_background && k == 0) {
@@ -109,9 +124,10 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz) {
 	else {
 	  pw1k = (nwz[k][w1] + beta) / (2 * nb_z[k] + W * beta);
 	  pw2k = (nwz[k][w2] + beta) / (2 * nb_z[k] + 1 + W * beta);
+          puk = (nu_z[user][k] + sigma) / (nb_z[k] + UN * sigma);
 	}
 	pk = (nb_z[k] + alpha) / (bs.size() + K * alpha);
-	pz[k] = pk * pw1k * pw2k;
+	pz[k] = pk * pw1k * pw2k * puk;
   }
 
   //pz.normalize();
@@ -122,9 +138,11 @@ void Model::assign_biterm_topic(Biterm& bi, int k) {
   bi.set_z(k);
   int w1 = bi.get_wi();
   int w2 = bi.get_wj();
+  int u = bi.get_user();
   nb_z[k] += 1;
   nwz[k][w1] += 1;
   nwz[k][w2] += 1;
+  nu_z[u][k] += 1;
 }
 
 
@@ -136,6 +154,10 @@ void Model::save_res(string dir) {
   string pt2 = dir + "pw_z";
   cout << "write p(w|z): " << pt2 << endl;
   save_pw_z(pt2);
+
+  string pt3 = dir + "pu_z";
+  cout << "write p(u|z): " << pt3 << endl;
+  save_pu_z(pt3);
 }
 
 // p(z) is determinated by the overall proportions
@@ -154,5 +176,16 @@ void Model::save_pw_z(string pt) {
 	  pw_z[k][w] = (nwz[k][w] + beta) / (nb_z[k] * 2 + W * beta);
 
 	wf << pw_z[k].str() << endl;
+  }
+}
+void Model::save_pu_z(string dir){
+  Pmat<double> pu_z(UN+1,K);
+  ofstream wf(dir.c_str());
+  for (int i = 0; i < UN + 1; i++) {
+        //cout<<"sum "<<sum<<endl;
+         for (int j = 0; j < K; j++) {
+                  pu_z[i][j] = (nu_z[i][j] + sigma ) / ( nb_z[j] + UN*sigma );
+          }
+          wf << pu_z[i].str() << endl;
   }
 }

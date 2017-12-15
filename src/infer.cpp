@@ -6,14 +6,15 @@
 #include "str_util.h"
 #include "infer.h"
 
-void Infer::run(string docs_pt, string model_dir) {
+void Infer::run(string docs_pt, string model_dir, string pz_d_file) {
   load_para(model_dir);
   
   cout << "Infer p(z|d) for docs in: " << docs_pt << endl;
   ifstream rf(docs_pt.c_str());
   assert(rf);
 
-  string pt = model_dir + "k" + str_util::itos(K) + ".pz_d";
+  //string pt = model_dir + "k" + str_util::itos(K) + ".pz_d";
+  string pt(pz_d_file);
   ofstream wf(pt.c_str());
   assert(wf);
   cout << "write p(z|d): " << pt << endl;
@@ -66,8 +67,9 @@ void Infer::doc_infer_sum_b(const Doc& doc, Pvec<double>& pz_d) {
   }
   else {
 	// more than one words
+        int user =0;
 	vector<Biterm> bs;
-	doc.gen_biterms(bs);
+	doc.gen_biterms(bs, user);
 
 	int W = pw_z.cols();	
 	for (int b = 0; b < bs.size(); ++b) {	  

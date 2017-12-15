@@ -43,17 +43,18 @@ int main(int argc, char* argv[]) {
 	int W = atoi(argv[i++]);
     double alpha = atof(argv[i++]);    // hyperparameters of p(z)
     double beta = atof(argv[i++]);     // hyperparameters of p(w|z)
+    double sigma = atof(argv[i++]);
     int n_iter = atoi(argv[i++]);
 	int save_step = atoi(argv[i++]);
     string docs_pt(argv[i++]);
     string dir(argv[i++]);
+    string doc_user(argv[i++]);
 
     cout << "Run BTM, K=" << K << ", W=" << W << ", alpha=" << alpha << ", beta=" << beta << ", n_iter=" << n_iter << ", save_step=" << save_step << " ====" << endl;	
     // load training data from file
 	clock_t start = clock();
-	Model model(K, W, alpha, beta, n_iter, save_step);
-    cout << "model object init done" << endl;
-	model.run(docs_pt, dir);
+	Model model(K, W, alpha, beta, sigma, n_iter, save_step);
+	model.run(docs_pt, dir, doc_user);
 	clock_t end = clock();
 	printf("cost %fs\n", double(end - start)/CLOCKS_PER_SEC);	
   } else if (strcmp(argv[1], "inf")==0) {
@@ -61,9 +62,10 @@ int main(int argc, char* argv[]) {
     int K = atoi(argv[3]);                  // topic num
     string docs_pt(argv[4]);
     string dir(argv[5]);
+    string pz_d_file(argv[6]);
     cout << "Run inference:K=" << K << ", type " << type << " ====" << endl;
     Infer inf(type, K);
-    inf.run(docs_pt, dir);
+    inf.run(docs_pt, dir, pz_d_file);
   } else {
 	cout << "Wrong common:" << argv[0] << " " << argv[1] << endl;
   }

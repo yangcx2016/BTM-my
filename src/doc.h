@@ -32,12 +32,12 @@ public:
   *   `win`:  window size for biterm extraction
   *   `bs`: the output biterms
   */
-  void gen_biterms(vector<Biterm>& bs, int win = 15) const {
+  void gen_biterms(vector<Biterm>& bs, int user, int win = 15) const {
 	if (ws.size() < 2) return;
 	
 	for (int i = 0; i < ws.size()-1; ++i) 
 	  for (int j = i+1; j < min(i + win, int(ws.size())); ++j) 
-		bs.push_back( Biterm(ws[i], ws[j]) );
+		bs.push_back( Biterm(ws[i], ws[j], user) );
   }
 
 private:

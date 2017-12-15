@@ -27,6 +27,7 @@ protected:
 
   double alpha;			// hyperparameters of p(z)
   double beta;			// hyperparameters of p(w|z)
+  double sigma;
   
   // sample recorders
   Pvec<int> nb_z;	// n(b|z), size K*1
@@ -38,25 +39,29 @@ protected:
   // equals to the emperiacal word dsitribution. It can filter 
   // out common words
   bool has_background; 
+  
+  int UN;
+  Pmat<int> nu_z;
 
 public:
-  Model(int K, int W, double a, double b, int n_iter, int save_step,
+  Model(int K, int W, double a, double b, double s, int n_iter, int save_step,
 		bool has_b = false): 
-	K(K), W(W), alpha(a), beta(b), 
+	K(K), W(W), alpha(a), beta(b), sigma(s),
 	n_iter(n_iter), has_background(has_b),
 	save_step(save_step) {
 	pw_b.resize(W);
 	nwz.resize(K, W);
 	nb_z.resize(K);
+        UN = 0;
   }
   
   // run estimate procedures
-  void run(string docs_pt, string res_dir);
+  void run(string docs_pt, string res_dir, string doc_user);
   
 private:
   // intialize memeber varibles and biterms
   void model_init();		// load from docs
-  void load_docs(string docs_pt);
+  void load_docs(string docs_pt, string user_pt);
   
   // update estimate of a biterm
   void update_biterm(Biterm& bi);
@@ -73,6 +78,7 @@ private:
   void save_res(string res_dir);
   void save_pz(string pt);
   void save_pw_z(string pt);
+  void save_pu_z(string dir);
 };
 
 #endif
