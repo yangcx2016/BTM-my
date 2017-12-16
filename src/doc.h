@@ -14,9 +14,18 @@ using namespace std;
 class Doc {
 private:
   vector<int> ws;	// word sequence
+  vector<Biterm> bts; //biterms
+  vector<int> hts; //hashtags
+  int user = 0;
   
 public: 
   Doc(const string& s) {read_doc(s);}
+
+  Doc(const string& wds, const string& hts, int u) {
+    read_doc(wds);
+    read_ht(hts);
+    user = u;
+  }
 
   int size() const {return ws.size();}
   
@@ -32,12 +41,12 @@ public:
   *   `win`:  window size for biterm extraction
   *   `bs`: the output biterms
   */
-  void gen_biterms(vector<Biterm>& bs, int user, int win = 15) const {
+  void gen_biterms(int win = 15) {
 	if (ws.size() < 2) return;
 	
 	for (int i = 0; i < ws.size()-1; ++i) 
 	  for (int j = i+1; j < min(i + win, int(ws.size())); ++j) 
-		bs.push_back( Biterm(ws[i], ws[j], user) );
+		bts.push_back( Biterm(ws[i], ws[j], user) );
   }
 
 private:
@@ -45,6 +54,11 @@ private:
     istringstream iss(s);
 	int w;
     while (iss >> w)  ws.push_back(w);
+  }
+  void read_ht(const string& s) {
+    istringstream iss(s);
+	int w;
+    while (iss >> w)  hts.push_back(w);
   }
 };
   
