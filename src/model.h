@@ -17,11 +17,13 @@ using namespace std;
 
 class Model {
 public:
-  vector<Biterm> bs;
+  //vector<Biterm> bs;
+  vector<Doc> blogs;
 
 protected:
   int W;				// vocabulary size
   int K;				// number of topics
+  int H;                //number of hashtags
   int n_iter;			// maximum number of iteration of Gibbs Sampling
   int save_step;
 
@@ -32,6 +34,7 @@ protected:
   // sample recorders
   Pvec<int> nb_z;	// n(b|z), size K*1
   Pmat<int> nwz;	  // n(w,z), size K*W
+  Pmat<int> nhz;        //n(h,z), size K*H
 
   Pvec<double> pw_b;   // the background word distribution  
 
@@ -52,7 +55,7 @@ public:
 	pw_b.resize(W);
 	nwz.resize(K, W);
 	nb_z.resize(K);
-        UN = 0;
+    UN = 0;
   }
   
   // run estimate procedures
