@@ -10,8 +10,8 @@
 #include "str_util.h"
 #include "model.h"
 
-void Model::run(string doc_pt, string res_dir, string doc_user) {
-  load_docs(doc_pt, doc_user);
+void Model::run(string doc_pt, string res_dir, string doc_user, string doc_ht) {
+  load_docs(doc_pt, doc_user, doc_ht);
   cout<<"after load doc"<<endl;
   model_init();
 
@@ -41,6 +41,8 @@ void Model::model_init() {
   // random initialize
   nu_z.resize(UN+1, K);
   ndz.resize(blogs.size(), K);
+  nhz.resize(K, H + 1);
+  hz.resize(H + 1);
   /**
   for (vector<Biterm>::iterator b = bs.begin(); b != bs.end(); ++b) {
 	int k = Sampler::uni_sample(K);
@@ -48,10 +50,15 @@ void Model::model_init() {
   }
   **/
   for (int i = 0; i < blogs.size(); ++i) {
-    vector<Biterm> bts = blogs[i];
+    vector<Biterm> bts = blogs[i].get_bts();
+    vector<int> hts = blogs[i].get_hts();
     for (int j = 0; j < bts.size(); ++j) {
       int k = Sampler::uni_sample(K);
       assign_biterm_topic(bts[j], k, i);
+    }
+    for (int j = 0; j < hts.size(); ++j) {
+      int k = Sampler::uni_sample(K);
+      assign_hashtag_topic(hts[j], k);
     }
   }
 }
@@ -72,7 +79,7 @@ void Model::load_docs(string dfile, string doc_user, string htfile) {
     exit(-1);
   }
 
-  ifstream htf(htfile.cstr());
+  ifstream htf(htfile.c_str());
   if(!htf) {
       cout << "htflie not find" << endl;
       exit(-1);
@@ -95,26 +102,42 @@ void Model::load_docs(string dfile, string doc_user, string htfile) {
 	Doc doc(line, line_ht, user);
 	doc.gen_biterms();
     blogs.push_back(doc);
-	for (int i = 0; i < doc.size(); ++i) {
+	for (int i = 0; i < doc.get_size(); ++i) {
 	  int w = doc.get_w(i);
 	  pw_b[w] += 1;
 	}
+    vector<int> hashtags = doc.get_hts();
+    for (int i = 0; i < hashtags.size(); ++i) {
+        if (hashtags[i] > H) {
+            H = hashtags[i];
+        }
   }
-  
+  }
   pw_b.normalize();
+
 }
 
 void Model::update_docs(int d) {
-    dc = blogs[d];
-    vector<Biterm> bts= dc.get_bts();
+    Doc dc = blogs[d];
+    vector<Biterm> bts = dc.get_bts();
     for(int i = 0; i < bts.size(); i++) {
         reset_biterm_topic(bts[i], d);
         Pvec<double> pz;
         compute_pz_b(bts[i], pz, d);
         int k = Sampler::mult_sample(pz.to_vector());
-        assign_biterm_topic(bts[i], k);
+        assign_biterm_topic(bts[i], k, d);
     }
+    vector<int> hts = dc.get_hts();
+    for(int i = 0; i < hts.size(); i++) {
+        reset_hashtag_topic(hts[i]);
+        Pvec<double> pz;
+        compute_pz_h(hts[i], pz, d);
+        int k = Sampler::mult_sample(pz.to_vector());
+        assign_hashtag_topic(hts[i], k);
+    }
+}
 
+/**
 // sample procedure for ith biterm 
 void Model::update_biterm(Biterm& bi) {
   reset_biterm_topic(bi);
@@ -127,6 +150,7 @@ void Model::update_biterm(Biterm& bi) {
   int k = Sampler::mult_sample(pz.to_vector());
   assign_biterm_topic(bi, k);
 }
+**/
 
 // reset topic assignment of biterm i, biterm i belong to blog d
 void Model::reset_biterm_topic(Biterm& bi, int d) {
@@ -169,11 +193,18 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz, int d) {
 	}
     puk = (nu_z[user][k] + sigma) / (ub_num + K * alpha);
 	//pk = (nb_z[k] + alpha) / (bs.size() + K * alpha);
-	pk = (ndz[k] + 1) / (ndz[k] + sigma);
+	pk = (ndz[d][k] + 1) / (ndz[d][k] + sigma);
 	pz[k] = pk * pw1k * pw2k * puk;
   }
 
   //pz.normalize();
+}
+
+void Model::compute_pz_h(int h, Pvec<double>& pz, int d) {
+  pz.resize(K);
+  for(int k = 0; k < K; ++k) {
+    pz[k] = (ndz[d][k] + 1) / (ndz[d][k] + sigma) * (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+  }
 }
 
 // assign topic k to biterm i, biterm i belong to blog d
@@ -187,6 +218,17 @@ void Model::assign_biterm_topic(Biterm& bi, int k, int d) {
   nwz[k][w2] += 1;
   nu_z[u][k] += 1;
   ndz[d][k] += 1;
+}
+
+void Model::assign_hashtag_topic(int ht, int k) {
+  nhz[ht][k] += 1;
+  nh[k] += 1;
+}
+
+void Model::reset_hashtag_topic(int ht) {
+  int k = hz[ht];
+  nhz[ht][k] -= 1;
+  nh[k] -= 1;
 }
 
 

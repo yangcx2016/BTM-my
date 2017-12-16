@@ -69,7 +69,7 @@ void Infer::doc_infer_sum_b(const Doc& doc, Pvec<double>& pz_d) {
 	// more than one words
         int user =0;
 	vector<Biterm> bs;
-	doc.gen_biterms(bs, user);
+	//doc.gen_biterms(bs, user);
 
 	int W = pw_z.cols();	
 	for (int b = 0; b < bs.size(); ++b) {	  

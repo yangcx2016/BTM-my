@@ -16,7 +16,7 @@ private:
   vector<int> ws;	// word sequence
   vector<Biterm> bts; //biterms
   vector<int> hts; //hashtags
-  int user = 0;
+  int user;
   
 public: 
   Doc(const string& s) {read_doc(s);}
@@ -30,13 +30,16 @@ public:
   int size() const {return ws.size();}
   
   const vector<int>& get_ws() const {return ws;}
-  const vector<int>& get_bts() const {return bts;}
+  const vector<Biterm>& get_bts() const {return bts;}
   const vector<int>& get_hts() const {return hts;}
   
   const int get_w(int i) const {
 	assert(i < ws.size());
 	return ws[i];
   }
+
+  const int get_ht_num() const {return hts.size();}
+  const int get_size() const {return ws.size();}
 
   /**
   * Extract biterms from a document

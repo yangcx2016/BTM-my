@@ -30,12 +30,15 @@ protected:
   double alpha;			// hyperparameters of p(z)
   double beta;			// hyperparameters of p(w|z)
   double sigma;
+  double gamma;
   
   // sample recorders
   Pvec<int> nb_z;	// n(b|z), size K*1
   Pmat<int> nwz;	  // n(w,z), size K*W
   Pmat<int> nhz;        //n(h,z), size K*H
   Pmat<int> ndz;        //n(d,z), size D*K
+  Pvec<int> nh;         //size K*1, the number of hashtags belong to topic k
+  Pvec<int> hz;         //size H*1
 
   Pvec<double> pw_b;   // the background word distribution  
 
@@ -48,41 +51,48 @@ protected:
   Pmat<int> nu_z;
 
 public:
-  Model(int K, int W, double a, double b, double s, int n_iter, int save_step,
+  Model(int K, int W, double a, double b, double s, double g, int n_iter, int save_step,
 		bool has_b = false): 
-	K(K), W(W), alpha(a), beta(b), sigma(s),
+	K(K), W(W), alpha(a), beta(b), sigma(s), gamma(g),
 	n_iter(n_iter), has_background(has_b),
 	save_step(save_step) {
 	pw_b.resize(W);
 	nwz.resize(K, W);
+    nh.resize(K);
 	nb_z.resize(K);
     UN = 0;
+    H = 0;
   }
   
   // run estimate procedures
-  void run(string docs_pt, string res_dir, string doc_user);
+  void run(string docs_pt, string res_dir, string doc_user, string doc_ht);
   
 private:
   // intialize memeber varibles and biterms
   void model_init();		// load from docs
-  void load_docs(string docs_pt, string user_pt);
+  void load_docs(string docs_pt, string user_pt, string ht_pt);
   
   // update estimate of a biterm
   void update_biterm(Biterm& bi);
   
   // reset topic proportions for biterm b
-  void reset_biterm_topic(Biterm& bi);
+  void reset_biterm_topic(Biterm& bi, int d);
   
   // assign topic proportions for biterm b
-  void assign_biterm_topic(Biterm& bi, int k);
+  void assign_biterm_topic(Biterm& bi, int k, int d);
   
   // compute condition distribution p(z|b)
-  void compute_pz_b(Biterm& bi, Pvec<double>& p);
+  void compute_pz_b(Biterm& bi, Pvec<double>& p, int d);
 
   void save_res(string res_dir);
   void save_pz(string pt);
   void save_pw_z(string pt);
   void save_pu_z(string dir);
+  
+  void update_docs(int d);
+  void assign_hashtag_topic(int ht, int k);
+  void reset_hashtag_topic(int ht);
+  void compute_pz_h(int h, Pvec<double>& pz, int d);
 };
 
 #endif
