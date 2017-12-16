@@ -29,7 +29,6 @@ protected:
 
   double alpha;			// hyperparameters of p(z)
   double beta;			// hyperparameters of p(w|z)
-  double sigma;
   double gamma;
   
   // sample recorders
@@ -51,9 +50,9 @@ protected:
   Pmat<int> nu_z;
 
 public:
-  Model(int K, int W, double a, double b, double s, double g, int n_iter, int save_step,
+  Model(int K, int W, double a, double b, double g, int n_iter, int save_step,
 		bool has_b = false): 
-	K(K), W(W), alpha(a), beta(b), sigma(s), gamma(g),
+	K(K), W(W), alpha(a), beta(b), gamma(g),
 	n_iter(n_iter), has_background(has_b),
 	save_step(save_step) {
 	pw_b.resize(W);
@@ -88,6 +87,7 @@ private:
   void save_pz(string pt);
   void save_pw_z(string pt);
   void save_pu_z(string dir);
+  void save_ph_z(string dir);
   
   void update_docs(int d);
   void assign_hashtag_topic(int ht, int k);

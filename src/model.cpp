@@ -191,9 +191,13 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz, int d) {
 	  pw1k = (nwz[k][w1] + beta) / (2 * nb_z[k] + W * beta);
 	  pw2k = (nwz[k][w2] + beta) / (2 * nb_z[k] + 1 + W * beta);
 	}
-    puk = (nu_z[user][k] + sigma) / (ub_num + K * alpha);
+    puk = (nu_z[user][k] + alpha) / (ub_num + K * alpha);
 	//pk = (nb_z[k] + alpha) / (bs.size() + K * alpha);
-	pk = (ndz[d][k] + 1) / (ndz[d][k] + sigma);
+    if(ndz[d][k] == 0) {
+      pk = 1;
+    }else{
+	  pk = (ndz[d][k] + 1)/ ndz[d][k];
+    }
 	pz[k] = pk * pw1k * pw2k * puk;
   }
 
@@ -203,7 +207,11 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz, int d) {
 void Model::compute_pz_h(int h, Pvec<double>& pz, int d) {
   pz.resize(K);
   for(int k = 0; k < K; ++k) {
-    pz[k] = (ndz[d][k] + 1) / (ndz[d][k] + sigma) * (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+    if(ndz[d][k] == 0) {
+      pz[k] = (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+    }else {
+      pz[k] = (ndz[d][k] + 1) / ndz[d][k] * (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+    }
   }
 }
 
@@ -244,6 +252,10 @@ void Model::save_res(string dir) {
   string pt3 = dir + "pu_z";
   cout << "write p(u|z): " << pt3 << endl;
   save_pu_z(pt3);
+
+  string pt4 = dir + "ph_z";
+  cout << "write p(h|z): " << pt4 << endl;
+  save_ph_z(pt4);
 }
 
 // p(z) is determinated by the overall proportions
@@ -252,6 +264,17 @@ void Model::save_pz(string pt) {
   Pvec<double> pz(nb_z);
   pz.normalize(alpha);
   pz.write(pt);
+}
+
+void Model::save_ph_z(string pt) {
+    Pmat<double> ph_z(K, H);
+    ofstream wf(pt.c_str());
+    for(int k = 0; k < K; k++) {
+        for (int h = 0; h <= H; h++) {
+            ph_z[k][h] = (nhz[k][h] + gamma) / (nh[k] + H * gamma);
+        }
+        wf << ph_z[k].str() << endl;
+    }
 }
 
 void Model::save_pw_z(string pt) {
@@ -269,8 +292,12 @@ void Model::save_pu_z(string dir){
   ofstream wf(dir.c_str());
   for (int i = 0; i < UN + 1; i++) {
         //cout<<"sum "<<sum<<endl;
+        int uz_sum = 0;
+        for (int j = 0; j < K; j++) {
+            uz_sum += nu_z[i][j];
+        }
          for (int j = 0; j < K; j++) {
-                  pu_z[i][j] = (nu_z[i][j] + sigma ) / ( nb_z[j] + UN*sigma );
+                  pu_z[i][j] = (nu_z[i][j] + alpha) / ( uz_sum + UN*alpha);
           }
           wf << pu_z[i].str() << endl;
   }

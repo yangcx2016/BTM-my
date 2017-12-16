@@ -19,7 +19,6 @@ void usage() {
        << "\tW  int, size of vocabulary" << endl
        << "\talpha   double, Pymmetric Dirichlet prior of P(z), like 1.0" << endl
        << "\tbeta    double, Pymmetric Dirichlet prior of P(w|z), like 0.01" << endl
-       << "\tsigma   double" << endl
        << "\tn_iter  int, number of iterations of Gibbs sampling" << endl
        << "\tsave_step   int, steps to save the results" << endl
        << "\tdocs_pt     string, path of training docs" << endl
@@ -46,7 +45,6 @@ int main(int argc, char* argv[]) {
 	int W = atoi(argv[i++]);
     double alpha = atof(argv[i++]);    // hyperparameters of p(z)
     double beta = atof(argv[i++]);     // hyperparameters of p(w|z)
-    double sigma = atof(argv[i++]);
     double gamma = atof(argv[i++]);
     int n_iter = atoi(argv[i++]);
 	int save_step = atoi(argv[i++]);
@@ -58,7 +56,7 @@ int main(int argc, char* argv[]) {
     cout << "Run BTM, K=" << K << ", W=" << W << ", alpha=" << alpha << ", beta=" << beta << ", n_iter=" << n_iter << ", save_step=" << save_step << " ====" << endl;	
     // load training data from file
 	clock_t start = clock();
-	Model model(K, W, alpha, beta, sigma, gamma, n_iter, save_step);
+	Model model(K, W, alpha, beta, gamma, n_iter, save_step);
 	model.run(docs_pt, dir, doc_user, doc_ht);
 	clock_t end = clock();
 	printf("cost %fs\n", double(end - start)/CLOCKS_PER_SEC);	
