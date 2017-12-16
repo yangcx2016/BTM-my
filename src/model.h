@@ -35,6 +35,7 @@ protected:
   Pvec<int> nb_z;	// n(b|z), size K*1
   Pmat<int> nwz;	  // n(w,z), size K*W
   Pmat<int> nhz;        //n(h,z), size K*H
+  Pmat<int> ndz;        //n(d,z), size D*K
 
   Pvec<double> pw_b;   // the background word distribution  
 
