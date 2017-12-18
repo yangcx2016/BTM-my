@@ -3,11 +3,12 @@
 
 K=20   # number of topics
 
+alpha=0.25
 #alpha=`echo "scale=3;50/$K"|bc`
-alpha=2.5
 beta=0.005
-niter=5
-save_step=501
+sigma=0.5
+niter=1000
+save_step=300
 
 input_dir=../data/
 output_dir=../output/
@@ -16,6 +17,8 @@ mkdir -p $output_dir/model
 
 # the input docs for training
 doc_pt=${input_dir}doc
+doc_user=${input_dir}user
+doc_ht=${input_dir}ht
 
 echo "=============== Index Docs ============="
 # docs after indexing
@@ -28,8 +31,8 @@ python indexDocs.py $doc_pt $dwid_pt $voca_pt
 echo "=============== Topic Learning ============="
 W=`wc -l < $voca_pt` # vocabulary size
 make -C ../src
-echo "../src/btm est $K $W $alpha $beta $niter $save_step $dwid_pt $model_dir"
-../src/btm est $K $W $alpha $beta $niter $save_step $dwid_pt $model_dir
+echo "../src/btm est $K $W $alpha $beta $sigma $niter $save_step $dwid_pt $model_dir $doc_user $doc_ht"
+../src/btm est $K $W $alpha $beta $sigma $niter $save_step $dwid_pt $model_dir $doc_user $doc_ht
 
 ## infer p(z|d) for each doc
 echo "================ Infer P(z|d)==============="

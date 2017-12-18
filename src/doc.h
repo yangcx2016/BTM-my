@@ -30,8 +30,8 @@ public:
   int size() const {return ws.size();}
   
   const vector<int>& get_ws() const {return ws;}
-  const vector<Biterm>& get_bts() const {return bts;}
-  const vector<int>& get_hts() const {return hts;}
+  vector<Biterm>& get_bts() {return bts;}
+  vector<int>& get_hts() {return hts;}
   
   const int get_w(int i) const {
 	assert(i < ws.size());

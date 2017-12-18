@@ -43,6 +43,7 @@ void Model::model_init() {
   ndz.resize(blogs.size(), K);
   nhz.resize(K, H + 1);
   hz.resize(H + 1);
+  cout << "user num:" << UN + 1 << " hashtag num:" << H + 1;
   /**
   for (vector<Biterm>::iterator b = bs.begin(); b != bs.end(); ++b) {
 	int k = Sampler::uni_sample(K);
@@ -50,8 +51,9 @@ void Model::model_init() {
   }
   **/
   for (int i = 0; i < blogs.size(); ++i) {
-    vector<Biterm> bts = blogs[i].get_bts();
-    vector<int> hts = blogs[i].get_hts();
+    Doc &dc = blogs[i];
+    vector<Biterm> &bts = dc.get_bts();
+    vector<int> hts = dc.get_hts();
     for (int j = 0; j < bts.size(); ++j) {
       int k = Sampler::uni_sample(K);
       assign_biterm_topic(bts[j], k, i);
@@ -60,7 +62,9 @@ void Model::model_init() {
       int k = Sampler::uni_sample(K);
       assign_hashtag_topic(hts[j], k);
     }
+    //blogs[i] = dc;
   }
+  cout << "model init done" << endl;
 }
 
 // input, each line is a doc
@@ -111,30 +115,37 @@ void Model::load_docs(string dfile, string doc_user, string htfile) {
         if (hashtags[i] > H) {
             H = hashtags[i];
         }
+    }
   }
-  }
-  pw_b.normalize();
+  //pw_b.normalize();
 
 }
 
 void Model::update_docs(int d) {
-    Doc dc = blogs[d];
-    vector<Biterm> bts = dc.get_bts();
+    //cout << "upd doc" << endl;
+    Doc &dc = blogs[d];
+    vector<Biterm> &bts = dc.get_bts();
     for(int i = 0; i < bts.size(); i++) {
+        //cout << i << endl;
         reset_biterm_topic(bts[i], d);
+        //cout << "re" << endl;
         Pvec<double> pz;
         compute_pz_b(bts[i], pz, d);
+        //cout << "cp" << endl;
         int k = Sampler::mult_sample(pz.to_vector());
         assign_biterm_topic(bts[i], k, d);
+        //cout << "as" << endl;
     }
     vector<int> hts = dc.get_hts();
     for(int i = 0; i < hts.size(); i++) {
         reset_hashtag_topic(hts[i]);
         Pvec<double> pz;
+        //cout << "start compute pzh" << endl;
         compute_pz_h(hts[i], pz, d);
         int k = Sampler::mult_sample(pz.to_vector());
         assign_hashtag_topic(hts[i], k);
     }
+    //blogs[d] = dc;
 }
 
 /**
@@ -159,6 +170,8 @@ void Model::reset_biterm_topic(Biterm& bi, int d) {
   int w1 = bi.get_wi();
   int w2 = bi.get_wj();
   int u = bi.get_user();
+
+  //cout << "k:" << k << " w1:" << w1 << " w2:" << w2 << " u:" << u << " d:" << d << endl;
  
   nb_z[k] -= 1;	// update number of biterms in topic K
   nwz[k][w1] -= 1;	// update w1's occurrence times in topic K
@@ -206,11 +219,11 @@ void Model::compute_pz_b(Biterm& bi, Pvec<double>& pz, int d) {
 
 void Model::compute_pz_h(int h, Pvec<double>& pz, int d) {
   pz.resize(K);
-  for(int k = 0; k < K; ++k) {
+  for(int k = 0; k < K; k++) {
     if(ndz[d][k] == 0) {
-      pz[k] = (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+      pz[k] = (nhz[k][h] + gamma) / (nh[k] + H * gamma);
     }else {
-      pz[k] = (ndz[d][k] + 1) / ndz[d][k] * (nhz[h][k] + gamma) / (nh[k] + H * gamma);
+      pz[k] = (ndz[d][k] + 1) / ndz[d][k] * (nhz[k][h] + gamma) / (nh[k] + H * gamma);
     }
   }
 }
@@ -229,13 +242,16 @@ void Model::assign_biterm_topic(Biterm& bi, int k, int d) {
 }
 
 void Model::assign_hashtag_topic(int ht, int k) {
-  nhz[ht][k] += 1;
+  //cout << "assign ht topic --- ht:" << ht << " k:" << k << endl;
+  nhz[k][ht] += 1;
   nh[k] += 1;
 }
 
 void Model::reset_hashtag_topic(int ht) {
   int k = hz[ht];
-  nhz[ht][k] -= 1;
+  //cout << "k:" << k << " ht:" << ht << endl;
+  nhz[k][ht] -= 1;
+  //cout << "here" << endl;
   nh[k] -= 1;
 }
 
@@ -270,7 +286,7 @@ void Model::save_ph_z(string pt) {
     Pmat<double> ph_z(K, H);
     ofstream wf(pt.c_str());
     for(int k = 0; k < K; k++) {
-        for (int h = 0; h <= H; h++) {
+        for (int h = 0; h < H; h++) {
             ph_z[k][h] = (nhz[k][h] + gamma) / (nh[k] + H * gamma);
         }
         wf << ph_z[k].str() << endl;
